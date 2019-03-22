@@ -1,0 +1,117 @@
+---
+title: "process_data_rmarkdown"
+output: html_document
+---
+
+## Who Represents You?
+
+# Your Representatives
+
+```{r setup, message=FALSE, warning=FALSE}
+
+# This is just a test file of using R Markdown. I did not realize that the R Markdown file that we were supposed to use was alredy provided for us. 
+
+
+
+library(dplyr)
+library(httr)
+library(jsonlite)
+library(knitr)
+
+source('keys.R')
+my.address <- "930 Big Tree Drive NW"
+
+base.url <- 'https://www.googleapis.com/civicinfo/v2/representatives'
+query.params <- list(address=my.address, key = google.key)
+response <- GET(base.url, query = query.params)
+body <- content(response, "text")
+results <- fromJSON(body)
+representatives.df <- flatten(results$officials) %>% as.data.frame()
+
+base.url.2 <- 'https://api.propublica.org/congress/'
+ending.parameters <- "v1/115/house/members.json"
+names(propublica.key) <- "X-API-Key"
+response.2 <- GET(paste0(base.url.2, ending.parameters), add_headers(.headers = propublica.key), content_type_json())
+body.2 <- content(response.2, "text")
+results.2 <- fromJSON(body.2)
+pro.representatives.df <- results.2$results$members
+pro.representatives.df <- as.data.frame(pro.representatives.df)
+```
+
+The data provided is collected from Civic Information API provided by Google (API Link: `base.url`), which identifies the Government Representatives for a certain address. For example, my address is `my.address` and there are `nrow(representatives.df)` individuals who represent that address.
+
+I have also collected data from the ProPublica API (API Link: `base.url.2`). This data depicts all of the members of the House of Representative, including a little information about each individual representative (such as phone number, office location, votes, and more).
+
+```{r}
+
+positions <- select(results$offices, name)
+
+top_position <- positions[1:3, ]
+bottom_position <- positions[4:nrow(positions) ,]
+positions <- cbind(c(as.character(top_position), "United States Senate", as.character(bottom_position)))
+
+full_top <- positions[1:9, ]
+full_bottom <- positions[10: nrow(positions), ]
+final_positions <- cbind(c(full_top, "WA State House District 5", full_bottom))
+
+
+representatives.df$position <- final_positions
+
+```
+
+We shall look at all of the representatives for the state of Washington, where the address was given. We shall break it down to party affiliations for each representative using a _horizontal barplot_ 
+
+```{r}
+
+state.representatives <- pro.representatives.df %>%
+                         group_by(state) %>%
+                         summarize("# of representatives" = n())
+washington.representatives <- pro.representatives.df %>%
+                              filter(state == "WA")
+washington.democrats <- washington.representatives %>%
+                        filter(party == "D") %>%
+                        nrow()
+washington.republicans <- washington.representatives %>%
+                          filter(party == "R") %>%
+                          nrow()
+barplot(c(washington.democrats, washington.republicans), horiz = TRUE, names.arg = c("Democrats",                  "Republicans"), col = c("blue", "red"), main = "Representative Parties in WA", ylab = "party",             xlab = "# of representatives")
+```
+
+```{r}
+
+seniority <- select(washington.representatives, seniority)
+barplot(as.numeric(washington.representatives$seniority), horiz = TRUE, 
+        names.arg = washington.representatives$last_name, main = "Washington Representatives Seniority",           las = 1, xlab = "# of years", ylab = "Representative", col = "Yellow")
+
+```
+
+```{r}
+
+P.Jayapal <- pro.representatives.df %>% filter(last_name == "Jayapal")
+P.Jayapal.votes <- P.Jayapal %>% select(first_name, last_name, total_votes, missed_votes, 
+                                        missed_votes_pct, votes_with_party_pct)
+age <- as.numeric(format(Sys.Date(), "%Y")) - as.numeric(format(as.Date(P.Jayapal$date_of_birth), "%Y"))
+twitter.handle <- P.Jayapal$twitter_account
+
+Jayapal.uri <- 'https://api.propublica.org/congress/v1/members/J000298/votes.json'
+Jayapal.response <- GET(paste0(Jayapal.uri), add_headers(.headers = propublica.key), content_type_json())
+Jayapal.body <- content(Jayapal.response, "text")
+Jayapal.results <- fromJSON(Jayapal.body)
+
+Jayapal.votes.df <- as.data.frame(Jayapal.results$results$votes) %>%
+                    flatten()
+
+```
+
+## Pramila Jayapal
+
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

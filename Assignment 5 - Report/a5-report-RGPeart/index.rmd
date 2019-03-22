@@ -1,0 +1,123 @@
+---
+title: "Who Represents You?"
+output:
+html_document: default
+css: styles.css
+---
+
+
+```{r setup, include=FALSE}
+## load API keys
+source("keys.R")
+## you may also load necessary libraries and set various options here
+library(dplyr)
+library(httr)
+library(jsonlite)
+library(knitr)
+knitr::opts_chunk$set(error=TRUE)
+                           # continue compiling on error
+```
+
+```{r address, include=FALSE}
+## insert your address here.  It does not to have quite complete.
+## Test your code with addresses in different states, see if it works
+my.address <- "930 Big Tree Drive NW"
+
+```
+
+```{r, include=FALSE}
+## Make the main computations here.  Keep the functions in a separate file(s)
+## and only include the final operations here.
+## You have to 'source()' your main R file(s) here:
+source('process_data.R')
+## You may also have to do some additional processing here
+```
+
+## Your Representatives
+
+The data provided is collected from Civic Information API provided by Google (API Link: `r base.url`), which identifies the Government Representatives for a certain address. For example, my address is `r my.address` and there are `r nrow(representatives.df)` individuals who represent that address.
+
+I have also collected data from the ProPublica API (API Link: `r base.url.2`). This data depicts all of the members of the House of Representative, including a little information about each individual representative (such as phone number, office location, votes, and more).
+
+
+```{r, echo=FALSE}
+## You may want to print the table in a nice way using `knitr::kable()`
+## when you have already created it.
+
+positions <- select(results$offices, name)
+
+top_position <- positions[1:3, ]
+bottom_position <- positions[4:nrow(positions) ,]
+positions <- cbind(c(as.character(top_position), "United States Senate", as.character(bottom_position)))
+
+full_top <- positions[1:9, ]
+full_bottom <- positions[10: nrow(positions), ]
+final_positions <- cbind(c(full_top, "WA State House District 5", full_bottom))
+
+representatives.df$position <- final_positions
+representatives.df[is.na(representatives.df)] <- '-'
+
+elected.officials.table <- select(representatives.df, name, position, party, emails, phones, photoUrl)
+
+knitr::kable(elected.officials.table)
+```
+
+## House of Representatives
+
+Here we shall take a look at **all** congressional representatives (in the House of Representatives) for the state of Washington with the given address located in _Issaquah, WA_. Here is the rundown of all _Washington_ representatives organized by party and seniority:
+
+
+```{r, echo=FALSE}
+state.representatives <- pro.representatives.df %>%
+                         group_by(state) %>%
+                         summarize("# of representatives" = n())
+
+washington.representatives <- pro.representatives.df %>%
+                              filter(state == "WA")
+washington.democrats <- washington.representatives %>%
+                        filter(party == "D") %>%
+                        nrow()
+washington.republicans <- washington.representatives %>%
+                          filter(party == "R") %>%
+                          nrow()
+barplot(c(washington.democrats, washington.republicans), horiz = TRUE, names.arg = c("Democrats",                  "Republicans"), col = c("blue", "red"), main = "Representative Parties in WA", ylab = "party",             xlab = "# of representatives")
+```
+
+```{r, echo=FALSE}
+
+seniority <- select(washington.representatives, seniority)
+barplot(as.numeric(washington.representatives$seniority), horiz = TRUE, 
+        names.arg = washington.representatives$last_name, main = "Washington Representatives Seniority",           las = 1, xlab = "# of years", ylab = "Representative", col = "Yellow")
+
+```
+
+## Pramila Jayapal
+
+```{r, include=FALSE}
+
+P.Jayapal <- pro.representatives.df %>% filter(last_name == "Jayapal")
+P.Jayapal.votes <- P.Jayapal %>% select(first_name, last_name, total_votes, missed_votes, 
+                                        missed_votes_pct, votes_with_party_pct)
+first.name <- P.Jayapal$first_name
+last.name <- P.Jayapal$last_name
+age <- as.numeric(format(Sys.Date(), "%Y")) - as.numeric(format(as.Date(P.Jayapal$date_of_birth), "%Y"))
+twitter.handle <- P.Jayapal$twitter_account
+
+Jayapal.base.uri <- "https://api.propublica.org/congress/v1/members/"
+Jayapal.id <- P.Jayapal$id
+get.P.Jayapal <- GET(paste0(Jayapal.base.uri, Jayapal.id, "/votes.json"), add_headers(.headers = propublica.key), content_type_json())
+Jayapal.body <- content(get.P.Jayapal, "text")
+Jayapal.results <- fromJSON(Jayapal.body)
+
+Jayapal.results <- Jayapal.results$results
+Jayapal.results <- Jayapal.results$votes
+final.results <- as.data.frame(Jayapal.results) %>% flatten()
+
+final.results$agreement <- (final.results$position == "Yes") & (final.results$result == "Passed")
+only.trues <- final.results %>% filter(agreement == TRUE)
+
+vote.percentage <- nrow(only.trues) / nrow(final.results) * 100
+
+```
+
+Join me on a journey through the life of **`r first.name`** **`r last.name`**. Mrs. `r last.name` is a Democratic Representative for the state of Washington. She is `r age` years old. Follow her at: `r twitter.handle`. For the last 20 congressional votes, our lovely representative was in accordance with the majority `r vote.percentage`% of the time.
