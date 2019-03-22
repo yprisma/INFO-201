@@ -1,0 +1,49 @@
+---
+title: "UFO Report"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+# setwd("~/../Desktop/School Stuff/Senior Year 2017-2018/Homework Fall Quarter 2017/INFO 201/Assignment 7 - Collaboration/a7-git-collaboration-the-cousins-victoria")
+
+source("scripts/summary.R")
+source("scripts/UFO Graph 1.R")
+source("scripts/UFOGraph2.R")
+
+knitr::opts_chunk$set(error = TRUE)
+```
+
+```{r, include=FALSE}
+
+values <- info_function(ufo_data)
+
+```
+
+# Summary
+
+The summary portion of this assignment takes in a dataset of any set of values and creates all sorts of cool information about the data. For the assignment, our team used the dataset regarding UFO sightings. We played around with the data and extracted a few values. One of the new values we created was to see how many different sightings saw the UFO in the shape of a _circle_ (**`r values$number.of.circles`**). We also found the _average latitude location_ (**`r values$avg.latitude`**) of all of the UFO sightings. Another exciting value we determined was the _percentage value_ of UFO sightings that occured in the _United States_ (the answer may shock you!... not really... it's **`r values$percent.usa`**). Then, for curiosity's sake, we found out certain values of the structure of the data set such as the _number of rows_ (**`r values$rows`**), the _number of columns_ (**`r values$columns`**), and the _dimensions_ of the dataset (**`r values$dimensions`**). We also gathered the _row_, as well as _column_, names that our data was comprised of (however, I will not be showing the last two as it will take up too much space :P). 
+
+Let's take a peek at the what we learned from the data!
+
+
+# Graph 1: Shape of UFO Sighting
+
+```{r, echo=FALSE}
+
+ufo_shapes(ufo_data)
+
+```
+
+The first graph pictured above represents the data of all UFO _shapes_ that were sighted. you can see that there are a variety of shapes that the UFO sightings come in. Most states have a sighting of just about every shape there is. The shape of **Light** seems to appear the most frequently to the UFO spotters. While shapes such as **Cone**, **Cross**, and **Egg** are not quite as common. 
+
+
+
+# Graph 2: UFO Sightings by State
+
+```{r, echo=FALSE}
+
+ufo_graph(ufo_data)
+
+```
+
+This graphic here displays the number of UFO sightings by each _state_ individually. The states of **California** and **Florida** record a large amount of UFO sightings. However, it is odd to see that a state as large as **Texas** has only recorded about half as many sightings as **Florida**. You can also tell from this visualization that most of the UFO sightings occur during the _nighttime_. Almost every state has more UFO encounters happening when it is **dark** out compared to when it is **light**. This shows a relationship with the _shapes_ of the UFO sightings, as the most common shape came in the form of **light** (a shape that would be harder to see when it is bright out).

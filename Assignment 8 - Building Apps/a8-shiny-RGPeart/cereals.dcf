@@ -1,0 +1,12 @@
+name: cereals
+title:
+username:
+account: rgpeart
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 239901
+bundleId: 1095478
+url: https://rgpeart.shinyapps.io/cereals/
+when: 1511599271.8392
+asMultiple: FALSE
+asStatic: FALSE
