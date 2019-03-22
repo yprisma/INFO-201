@@ -1,0 +1,27 @@
+---
+output: html_document
+---
+
+```{r, echo=FALSE, message=FALSE}
+### Exercise 1 ###
+
+library(jsonlite)
+library(dplyr)
+library(httr)
+
+# Read in API keys
+
+source('api-key.R')
+
+# Source in analysis file
+source('analysis.R')
+
+
+x <- "hello"
+y <- 27
+
+
+```
+
+# `r x`
+Write a sentence `r y`
